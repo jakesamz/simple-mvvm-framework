@@ -22,8 +22,10 @@ export default class Observer {
       enumerable: true,
       configurable: false,
       get() {
-        //添加依赖，
-        Dep.target && dep.addSub(Dep.target);
+        //添加依赖
+        if(!dep.includes(Dep.target)) {//已存在的无需再次添加
+          Dep.target && dep.addSub(Dep.target);
+        }
         return value;
       },
       set(newValue) {
