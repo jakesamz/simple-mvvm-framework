@@ -6,18 +6,57 @@ export default class Compiler {
     //读取模板，并存储下来
     this.context = context;
 
-    //解析表达式，求值并添加响应的订阅者 watcher
-    this.compileNodes(this.context.$el);
+    this.$el = this.context.$el;
+
+    //把原生dom转换为文档片段
+    this.fragment = this.domToFragments(this.$el);
+
+    console.log(this.fragment);
+
+    //解析表达式，计算值，并添加响应的订阅者 watcher
+    this.compileFragment(this.fragment);
+ 
+    //把文档片段添加回根节点
+    this.$el.appendChild(this.fragment);
 
   }
 
-  compileNodes(dom) {
-    if (!dom) {
+  /**
+   * 把原生dom转换为文档片段
+   * @param {*} dom 
+   */
+  domToFragments(dom) {
+    let newFragment = document.createDocumentFragment();
+    if(dom.childNodes) {
+      dom.childNodes.forEach(node => {
+        if(!this.exclude(node)) {
+          console.log(node)
+          newFragment.appendChild(node);
+        }
+      })
+    }
+    return newFragment;
+  }
+
+  /**
+   * 排除回车节点（在转换为文档片段时排除）
+   * @param {*} node 
+   */
+  exclude(node) {
+    let regExp = /^[\t\n\r]+/;
+    return node.nodeType === 8 || (node.nodeType === 3 && regExp.test(node.textContent))
+  }
+
+  /**
+   * 编译文档片段
+   * @param {*} fragment 
+   */
+  compileFragment(fragment) {
+    if (!fragment) {
       return;
     }
-    let children = this.excludeNodes(dom);
 
-    //console.log(children);
+    let children = fragment.childNodes;
 
     for (let node of children) {
       //console.log(node.nodeType)
@@ -27,15 +66,6 @@ export default class Compiler {
         this.compileTextNode(node);
       }
     }
-  }
-
-  excludeNodes(nodes) {
-    return [...nodes.childNodes].filter(node => !this.exclude(node));
-  }
-
-  exclude(node) {
-    let regExp = /^[\t\n\r]+/;
-    return node.nodeType === 8 || (node.nodeType === 3 && regExp.test(node.textContent))
   }
 
   /**
@@ -65,9 +95,13 @@ export default class Compiler {
   }
 
 
-  //指令标签
+  /**
+   * 编译元素节点
+   * @param {} node 
+   */
   compileElementNode(node) {
-    this.compileNodes(node);
+    //递归编译子节点
+    this.compileFragment(node);
     //console.log('compile element node', node.textContent);
     const attrs = node.getAttributeNames();
     //console.log(attrs)
