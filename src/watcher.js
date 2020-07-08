@@ -13,6 +13,7 @@ export default class Watcher {
     this.cb = cb;
     this.immediate = immediate;
     this.uid = uid++; //为每个 watcher 设置一个id;
+    this.value = this.get();
     immediate && this.update();
   }
 
@@ -30,9 +31,11 @@ export default class Watcher {
    * 如果有值更新，通知对应的订阅者更新状态
    */
   update() {
-    let value = this.get();
+    let oldVaule = this.value;
+    let newValue = this.get();
+    this.value = newValue;
     //console.debug('update value', value)
-    this.cb && this.cb.call(this, value);
+    this.cb && this.cb.call(this, this.value, oldVaule);
   }
 
   /**
